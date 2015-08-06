@@ -1,0 +1,11 @@
+[package]
+name = "rawlib"
+version = "0.1.0"
+authors = ["Jonesey13 <adj27@cam.ac.uk>"]
+
+[dependencies]
+libc = "*"
+winapi = "*"
+kernel32-sys = "*"
+user32-sys = "*"
+time = "*"
