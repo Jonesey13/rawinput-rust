@@ -72,8 +72,8 @@ fn main(){
 
         let rid = RAWINPUTDEVICE{
 	    usUsagePage: 1,
-	    usUsage: 2,	// Joystick
-	    dwFlags: RIDEV_EXINPUTSINK,
+	    usUsage: 2,	// Mice
+	    dwFlags: RIDEV_INPUTSINK,
 	    hwndTarget:  hwnd,
         };
 
@@ -113,25 +113,26 @@ fn main(){
             for _ in 0..numberofelements as u32{
                 let raw_input_ptr  = derive_rawinput_type(array.as_mut_ptr() as *mut RAWINPUT);
                 match raw_input_ptr{
-                    RAWINPUTTYPE::MOUSE(pointer) => { let value = *pointer;
-                                                      let mut size: UINT  = 0;
-                                                      let mut name_buffer: [u16; 1024] = mem::uninitialized();
-                                                      let mut name_buffer_size: UINT = 1024;
-                                                      let result_2 = GetRawInputDeviceInfoW(value.header.hDevice,
-                                                                                            RIDI_DEVICENAME,
-                                                                                            name_buffer.as_mut_ptr() as LPVOID,
-                                                                                            &mut name_buffer_size);
-                                                      if result_2 == -1i32 as UINT{
-                                                          panic!("GetRawInputDeviceInfo Failed: Required Size: {:?}", name_buffer_size);
-                                                      }
-                                                      let name_slice = &name_buffer[0..result_2 as usize];
-                                                      let full_name = match OsString::from_wide(name_slice).into_string(){
-                                                          Ok(something) => something,
-                                                          Err(_) => panic!("String Conversion Failed"),
-                                                      };
-                                                      println!("{}", full_name);
-                                                      println!("{:?}" ,value.header.hDevice);
-                                                      }
+                    RAWINPUTTYPE::MOUSE(pointer) =>
+                    { let value = *pointer;
+                      let mut size: UINT  = 0;
+                      let mut name_buffer: [u16; 1024] = mem::uninitialized();
+                      let mut name_buffer_size: UINT = 1024;
+                      let result_2 = GetRawInputDeviceInfoW(value.header.hDevice,
+                                                            RIDI_DEVICENAME,
+                                                            name_buffer.as_mut_ptr() as LPVOID,
+                                                            &mut name_buffer_size);
+                      if result_2 == -1i32 as UINT{
+                          panic!("GetRawInputDeviceInfo Failed: Required Size: {:?}", name_buffer_size);
+                      }
+                      let name_slice = &name_buffer[0..result_2 as usize];
+                      let full_name = match OsString::from_wide(name_slice).into_string(){
+                          Ok(something) => something,
+                          Err(_) => panic!("String Conversion Failed"),
+                      };
+                      println!("{}", full_name);
+                      println!("{:?}" ,value.header.hDevice);
+                    }
                     _ => (),
                 }
             }
