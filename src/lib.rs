@@ -14,7 +14,7 @@ use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 use std::ffi::OsString;
 use std::os::windows::ffi::OsStringExt;
-use std::collections::HashMap;
+use std::collections::{HashMap,VecDeque};
 
 #[test]
 fn it_works() {
@@ -214,52 +214,26 @@ pub fn process_mouse_data(raw_data: &RAWMOUSE, id: usize) -> Vec<RawEvent>{
     let mut output: Vec<RawEvent> = Vec::new();
     if *buttons & RI_MOUSE_LEFT_BUTTON_DOWN != 0{
         output.push(RawEvent::MouseButtonEvent(id, MouseButton::Left, ButtonState::Pressed ));
-        println!("Clicked");
+    }
+    if *buttons & RI_MOUSE_LEFT_BUTTON_UP != 0{
+        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Left, ButtonState::Released ));
+    }
+    if *buttons & RI_MOUSE_RIGHT_BUTTON_DOWN != 0{
+        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Right, ButtonState::Pressed ));
+    }
+    if *buttons & RI_MOUSE_RIGHT_BUTTON_UP != 0{
+        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Right, ButtonState::Released ));
+    }
+    if *buttons & RI_MOUSE_MIDDLE_BUTTON_DOWN != 0{
+        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Middle, ButtonState::Pressed ));
+    }
+    if *buttons & RI_MOUSE_MIDDLE_BUTTON_UP != 0{
+        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Middle, ButtonState::Released ));
     }
     output
 }
 
 
-pub fn read_input_buffer(devices: &Devices) -> Vec<RawEvent>{
-    let mut output: Vec<RawEvent> = Vec::new();
-    unsafe{
-        let mut array_alloc: [u8;1024] = mem::uninitialized();
-        let mut buffer_size: UINT = 0;
-
-        let mut numberofelements: i32 = GetRawInputBuffer(ptr::null_mut(),
-                                                          &mut buffer_size,
-                                                          mem::size_of::<RAWINPUTHEADER>() as UINT) as INT;
-        if numberofelements as INT == -1{
-            panic!("GetRawInputBuffer Gave Error on First Call!");
-        }
-        buffer_size = 1024;
-        numberofelements = GetRawInputBuffer(array_alloc.as_mut_ptr() as PRAWINPUT,
-                                             &mut buffer_size,
-                                             mem::size_of::<RAWINPUTHEADER>() as UINT) as INT;
-
-        if numberofelements as INT == -1{
-            panic!("GetRawInputBuffer Gave Error on Second Call!");
-        }
-
-        let mut array_ptr = array_alloc.as_mut_ptr();
-        for _ in 0..numberofelements as u32{
-            let raw_input_ptr  = derive_rawinput_type(array_ptr as *mut RAWINPUT);
-            match raw_input_ptr{
-                RAWINPUTTYPE::MOUSE(pointer) =>
-                { let value = *pointer;
-                  let pos = match devices.device_map.get(&value.header.hDevice){
-                      Some(item) => *item,
-                      None => continue,
-                  };
-                  output.extend(process_mouse_data(&value.data, pos));
-                  array_ptr = array_ptr.offset(1);
-                }
-                _ => (),
-            }
-        }
-    }
-    output
-}
 
 #[derive(Clone)]
 pub struct RawInputWindow{
@@ -267,9 +241,11 @@ pub struct RawInputWindow{
     keyboard_input: bool,
     mouse_input: bool,
     gamepad_input: bool,
+    event_queue: VecDeque<RawEvent>,
+    devices: Devices,
 }
 
-pub fn setup_message_loop() -> Result<RawInputWindow, &'static str>{
+pub fn setup_message_window() -> Result<RawInputWindow, &'static str>{
     let hwnd: HWND;
     unsafe{
         let hinstance = GetModuleHandleW(ptr::null());
@@ -320,6 +296,8 @@ pub fn setup_message_loop() -> Result<RawInputWindow, &'static str>{
         mouse_input: false,
         keyboard_input: false,
         gamepad_input: false,
+        event_queue: VecDeque::new(),
+        devices: Devices::new(),
     })
 }
 
@@ -369,6 +347,57 @@ impl RawInputWindow{
 	        return Err("Registration of Controller Failed");
             }
         }
+        self.devices = produce_raw_device_list();
         Ok(self)
+    }
+
+
+    pub fn read_input_buffer(&mut self){
+        unsafe{
+            let mut array_alloc: [u8;1024] = mem::uninitialized();
+            let mut buffer_size: UINT = 0;
+
+            let mut numberofelements: i32 = GetRawInputBuffer(ptr::null_mut(),
+                                                              &mut buffer_size,
+                                                              mem::size_of::<RAWINPUTHEADER>() as UINT) as INT;
+            if numberofelements as INT == -1{
+                panic!("GetRawInputBuffer Gave Error on First Call!");
+            }
+            buffer_size = 1024;
+            numberofelements = GetRawInputBuffer(array_alloc.as_mut_ptr() as PRAWINPUT,
+                                                 &mut buffer_size,
+                                                 mem::size_of::<RAWINPUTHEADER>() as UINT) as INT;
+
+            if numberofelements as INT == -1{
+                panic!("GetRawInputBuffer Gave Error on Second Call!");
+            }
+
+            let mut array_ptr = array_alloc.as_mut_ptr();
+
+            for _ in 0..numberofelements as u32{
+                let header = (*(array_ptr as *mut RAWINPUT)).header;
+                let raw_input_ptr = derive_rawinput_type(array_ptr as *mut RAWINPUT);
+                array_ptr = array_ptr.offset(header.dwSize as isize);
+                let pos = match self.devices.device_map.get(&header.hDevice){
+                    Some(item) => *item,
+                    None => continue,
+                };
+                match raw_input_ptr{
+                    RAWINPUTTYPE::MOUSE(pointer) => {
+                        let value = *pointer;
+                        self.event_queue.extend(process_mouse_data(&value.data, pos));
+                    }
+                    _ => (),
+                }
+            }
+        }
+    }
+
+    pub fn get_event(&mut self) -> Option<RawEvent>{
+        if self.event_queue.is_empty(){
+            self.read_input_buffer();
+        }
+        let event = self.event_queue.pop_front();
+        event
     }
 }
