@@ -2,7 +2,6 @@ extern crate libc;
 extern crate winapi;
 extern crate kernel32;
 extern crate user32;
-extern crate regex;
 
 
 use winapi::*;
@@ -15,38 +14,46 @@ use std::os::windows::ffi::OsStrExt;
 use std::ffi::OsString;
 use std::os::windows::ffi::OsStringExt;
 use std::collections::{HashMap,VecDeque};
+use std::thread;
+use std::thread::JoinHandle;
+use std::sync::mpsc::{
+    Sender,
+    Receiver,
+    channel
+};
+
 
 #[test]
 fn it_works() {
 }
 
 #[repr(C)] #[derive(Debug)]
-pub struct RAWINPUTHID {
+struct RAWINPUTHID {
     pub header: RAWINPUTHEADER,
     pub data: RAWHID,
 }
 
 #[repr(C)] #[derive(Clone, Copy, Debug)]
-pub struct RAWINPUTMOUSE {
+struct RAWINPUTMOUSE {
     pub header: RAWINPUTHEADER,
     pub data: RAWMOUSE,
 }
 
 
 #[repr(C)] #[derive(Clone, Copy, Debug)]
-pub struct RAWINPUTKEYBOARD {
+struct RAWINPUTKEYBOARD {
     pub header: RAWINPUTHEADER,
     pub data: RAWKEYBOARD,
 }
 
 
-pub enum RAWINPUTTYPE{
+enum RAWINPUTTYPE {
     MOUSE(*mut RAWINPUTMOUSE),
     KEYBOARD(*mut RAWINPUTKEYBOARD),
     HID(*mut RAWINPUTHID),
 }
 
-pub unsafe fn derive_rawinput_type(input: *mut RAWINPUT) -> RAWINPUTTYPE{
+unsafe fn derive_rawinput_type(input: *mut RAWINPUT) -> RAWINPUTTYPE {
     use RAWINPUTTYPE::*;
     let input_type = (*input).header.dwType;
     match input_type{
@@ -58,43 +65,43 @@ pub unsafe fn derive_rawinput_type(input: *mut RAWINPUT) -> RAWINPUTTYPE{
 }
 
 #[derive(Clone)]
-pub enum ButtonState{
+pub enum ButtonState {
     Pressed,
     Released,
 }
 
 #[derive(Clone)]
-pub enum MouseButton{
+pub enum MouseButton {
     Left,
     Right,
     Middle,
 }
 
 #[derive(Clone)]
-pub enum MouseDirection{
+pub enum MouseDirection {
     X,
     Y,
 }
 
 #[derive(Clone)]
-pub enum RawEvent{
+pub enum RawEvent {
     MouseButtonEvent(usize,MouseButton,ButtonState),
     MouseMoveEvent(usize,MouseDirection,isize),
     MouseWheelEvent(usize,isize),
 }
 
 #[derive(Clone)]
-pub struct Mouse{
+pub struct Mouse {
     name: String,
 }
 
 #[derive(Clone)]
-pub struct Keyboard{
+pub struct Keyboard {
     name: String,
 }
 
 #[derive(Clone)]
-pub struct Hid{
+pub struct Hid {
     name: String,
 }
 
@@ -107,7 +114,7 @@ pub struct Devices{
 }
 
 impl Devices{
-    pub fn new() -> Devices{
+    pub fn new () -> Devices {
         Devices{ mice: Vec::new(),
                  keyboards: Vec::new(),
                  hids: Vec::new(),
@@ -116,8 +123,216 @@ impl Devices{
     }
 }
 
+enum Command {
+    Register(DeviceType),
+    GetEvent,
+    Finish
+}
 
-pub fn produce_raw_device_list() -> Devices{
+#[derive(PartialEq, Eq)]
+pub enum DeviceType {
+    Mice,
+    Keyboards,
+    Hids,
+    All,
+}
+
+pub struct RawInputManager {
+    joiner: Option<JoinHandle<()>>,
+    sender: Sender<Command>,
+    receiver: Receiver<Option<RawEvent>>,
+}
+
+impl RawInputManager {
+
+    pub fn new() -> Result<RawInputManager, &'static str> {
+        let (tx, rx) = channel();
+        let (tx2, rx2) = channel();
+
+        let joiner = thread::spawn(move || {
+            let hwnd = setup_message_window();
+            let mut event_queue = VecDeque::new();
+            let mut devices = Devices::new();
+
+            let mut exit = false;
+            while !exit {
+                match  rx.recv().unwrap(){
+                    Command::Register(thing) => {devices = register_devices(hwnd, thing).unwrap();
+                                                  tx2.send(None).unwrap();},
+                    Command::GetEvent => {tx2.send(get_event(&mut event_queue, &devices)).unwrap();},
+                    Command::Finish => {exit = true;},
+                };
+            };
+        });
+
+        Ok(RawInputManager{
+            joiner: Some(joiner),
+            sender: tx,
+            receiver: rx2,
+        })
+    }
+
+    pub fn register_devices(&mut self, device_type: DeviceType) {
+        self.sender.send(Command::Register(device_type)).unwrap();
+        self.receiver.recv().unwrap();
+    }
+
+    pub fn get_event(&mut self) -> Option<RawEvent> {
+        self.sender.send(Command::GetEvent).unwrap();
+        self.receiver.recv().unwrap()
+    }
+
+}
+
+impl Drop for RawInputManager {
+    fn drop(&mut self) {
+        self.sender.send(Command::Finish).unwrap();
+        self.joiner.take().unwrap().join().unwrap();
+    }
+}
+
+fn register_devices(hwnd: HWND, reg_type: DeviceType) -> Result<Devices, &'static str> {
+    let mut rid_vec: Vec<RAWINPUTDEVICE> = Vec::new();
+
+    if (reg_type == DeviceType::Mice) || (reg_type == DeviceType::All) {
+        let rid = RAWINPUTDEVICE{
+	    usUsagePage: 1,
+	    usUsage: 2,	// Mice
+	    dwFlags: RIDEV_INPUTSINK,
+	    hwndTarget: hwnd,
+        };
+        rid_vec.push(rid);
+    }
+
+
+    if (reg_type == DeviceType::Hids) || (reg_type == DeviceType::All) {
+        let rid = RAWINPUTDEVICE{
+	    usUsagePage: 1,
+	    usUsage: 5,	// Gamepads
+	    dwFlags: RIDEV_INPUTSINK,
+	    hwndTarget: hwnd,
+        };
+        rid_vec.push(rid);
+    }
+
+
+    if (reg_type == DeviceType::Keyboards) || (reg_type == DeviceType::All) {
+        let rid = RAWINPUTDEVICE{
+	    usUsagePage: 1,
+	    usUsage: 6,	// Keyboards
+	    dwFlags: RIDEV_INPUTSINK,
+	    hwndTarget: hwnd,
+        };
+        rid_vec.push(rid);
+    }
+
+    unsafe{
+        if RegisterRawInputDevices(rid_vec.as_mut_ptr(), rid_vec.len() as UINT, mem::size_of::<RAWINPUTDEVICE>() as UINT) ==0 {
+	    return Err("Registration of Controller Failed");
+        }
+    }
+    Ok(produce_raw_device_list())
+}
+
+
+fn read_input_buffer(event_queue: &mut VecDeque<RawEvent>, devices: &Devices){
+    unsafe{
+        let mut array_alloc: [u8;1024] = mem::uninitialized();
+        let mut buffer_size: UINT = 0;
+
+        let mut numberofelements: i32 = GetRawInputBuffer(ptr::null_mut(),
+                                                          &mut buffer_size,
+                                                          mem::size_of::<RAWINPUTHEADER>() as UINT) as INT;
+        if numberofelements as INT == -1{
+            panic!("GetRawInputBuffer Gave Error on First Call!");
+        }
+        buffer_size = 1024;
+        numberofelements = GetRawInputBuffer(array_alloc.as_mut_ptr() as PRAWINPUT,
+                                             &mut buffer_size,
+                                             mem::size_of::<RAWINPUTHEADER>() as UINT) as INT;
+
+        if numberofelements as INT == -1{
+            panic!("GetRawInputBuffer Gave Error on Second Call!");
+        }
+
+        let mut array_ptr = array_alloc.as_mut_ptr();
+
+        for _ in 0..numberofelements as u32{
+            let header = (*(array_ptr as *mut RAWINPUT)).header;
+            let raw_input_ptr = derive_rawinput_type(array_ptr as *mut RAWINPUT);
+            array_ptr = array_ptr.offset(header.dwSize as isize);
+            let pos = match devices.device_map.get(&header.hDevice){
+                Some(item) => *item,
+                None => continue,
+            };
+            match raw_input_ptr{
+                RAWINPUTTYPE::MOUSE(pointer) => {
+                    let value = *pointer;
+                    event_queue.extend(process_mouse_data(&value.data, pos));
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
+fn get_event(event_queue: &mut VecDeque<RawEvent>, devices: &Devices) -> Option<RawEvent>{
+    if event_queue.is_empty(){
+        read_input_buffer( event_queue, &devices);
+    }
+    let event = event_queue.pop_front();
+    event
+}
+
+fn setup_message_window() -> HWND{
+    let hwnd: HWND;
+    unsafe{
+        let hinstance = GetModuleHandleW(ptr::null());
+        if hinstance == ptr::null_mut(){
+            panic!("Instance Generation Failed");
+        }
+        let classname =  OsStr::new("RawInput Hidden Window").encode_wide().chain(Some(0).into_iter())
+            .collect::<Vec<_>>();
+
+        let wcex = WNDCLASSEXW{
+            cbSize: (mem::size_of::<WNDCLASSEXW>()) as UINT,
+            cbClsExtra: 0,
+            cbWndExtra: 0,
+            hbrBackground: ptr::null_mut(),
+            hCursor:  ptr::null_mut(),
+            hIcon:  ptr::null_mut(),
+            hIconSm:  ptr::null_mut(),
+            hInstance: hinstance,
+            lpfnWndProc: Some(DefWindowProcW),
+            lpszClassName: classname.as_ptr(),
+            lpszMenuName: ptr::null_mut(),
+            style: 0,
+        };
+        let a = RegisterClassExW(&wcex);
+        if a == 0{
+	    panic!("Registering WindowClass Failed!");
+        }
+
+        hwnd = CreateWindowExW(0,
+                               classname.as_ptr(),
+                               classname.as_ptr(),
+                               0,
+                               CW_USEDEFAULT,
+                               CW_USEDEFAULT,
+                               CW_USEDEFAULT,
+                               CW_USEDEFAULT,
+                               HWND_MESSAGE,
+                               ptr::null_mut(),
+                               hinstance,
+                               ptr::null_mut());
+        if hwnd.is_null(){
+            panic!("Window Creation Failed!");
+        }
+    }
+    hwnd
+}
+
+fn produce_raw_device_list() -> Devices {
     let mut device_list = Devices::new();
     unsafe{
         let mut buffer: [u8; 10000] = mem::uninitialized();
@@ -159,7 +374,7 @@ pub fn produce_raw_device_list() -> Devices{
 
             let name = String::from(full_name);
 
-            match device_type{
+            match device_type {
                 RIM_TYPEMOUSE => {
                     if let Some(pos) = device_list.mice.iter().cloned().enumerate().find(|m| m.1.name == name) {
                         device_list.device_map.insert(device_handle, pos.0);
@@ -194,7 +409,8 @@ pub fn produce_raw_device_list() -> Devices{
     device_list
 }
 
-pub fn print_raw_device_list(device_list: Devices){
+pub fn print_raw_device_list () {
+    let device_list = produce_raw_device_list();
     println!("Mice:");
     for mouse in device_list.mice{
         println!("{}", mouse.name);
@@ -209,7 +425,7 @@ pub fn print_raw_device_list(device_list: Devices){
     }
 }
 
-pub fn process_mouse_data(raw_data: &RAWMOUSE, id: usize) -> Vec<RawEvent>{
+fn process_mouse_data(raw_data: &RAWMOUSE, id: usize) -> Vec<RawEvent> {
     let buttons = &raw_data.usButtonFlags;
     let mut output: Vec<RawEvent> = Vec::new();
     if *buttons & RI_MOUSE_LEFT_BUTTON_DOWN != 0{
@@ -231,173 +447,4 @@ pub fn process_mouse_data(raw_data: &RAWMOUSE, id: usize) -> Vec<RawEvent>{
         output.push(RawEvent::MouseButtonEvent(id, MouseButton::Middle, ButtonState::Released ));
     }
     output
-}
-
-
-
-#[derive(Clone)]
-pub struct RawInputWindow{
-    hwnd: HWND,
-    keyboard_input: bool,
-    mouse_input: bool,
-    gamepad_input: bool,
-    event_queue: VecDeque<RawEvent>,
-    devices: Devices,
-}
-
-pub fn setup_message_window() -> Result<RawInputWindow, &'static str>{
-    let hwnd: HWND;
-    unsafe{
-        let hinstance = GetModuleHandleW(ptr::null());
-        if hinstance == ptr::null_mut(){
-            return Err("Instance Generation Failed");
-        }
-        let classname =  OsStr::new("RawInput Hidden Window").encode_wide().chain(Some(0).into_iter())
-            .collect::<Vec<_>>();
-
-        let wcex = WNDCLASSEXW{
-            cbSize: (mem::size_of::<WNDCLASSEXW>()) as UINT,
-            cbClsExtra: 0,
-            cbWndExtra: 0,
-            hbrBackground: ptr::null_mut(),
-            hCursor:  ptr::null_mut(),
-            hIcon:  ptr::null_mut(),
-            hIconSm:  ptr::null_mut(),
-            hInstance: hinstance,
-            lpfnWndProc: Some(DefWindowProcW),
-            lpszClassName: classname.as_ptr(),
-            lpszMenuName: ptr::null_mut(),
-            style: 0,
-        };
-        let a = RegisterClassExW(&wcex);
-        if a == 0{
-	    return Err("Registering WindowClass Failed!");
-        }
-
-        //let HWND_MESSAGE: HWND = -3isize as HWND;
-        hwnd = CreateWindowExW(0,
-                               classname.as_ptr(),
-                               classname.as_ptr(),
-                               0,
-                               CW_USEDEFAULT,
-                               CW_USEDEFAULT,
-                               CW_USEDEFAULT,
-                               CW_USEDEFAULT,
-                               HWND_MESSAGE,
-                               ptr::null_mut(),
-                               hinstance,
-                               ptr::null_mut());
-        if hwnd.is_null(){
-            return Err("Window Creation Failed!");
-        }
-    }
-    Ok(RawInputWindow{
-        hwnd: hwnd,
-        mouse_input: false,
-        keyboard_input: false,
-        gamepad_input: false,
-        event_queue: VecDeque::new(),
-        devices: Devices::new(),
-    })
-}
-
-impl RawInputWindow{
-    pub fn using_mice(&mut self) -> &mut Self{
-        self.mouse_input = true;
-        self
-    }
-
-    pub fn register_devices(&mut self) -> Result<&mut Self,&'static str>{
-        let mut rid_vec: Vec<RAWINPUTDEVICE> = Vec::new();
-
-        if self.mouse_input{
-            let rid = RAWINPUTDEVICE{
-	        usUsagePage: 1,
-	        usUsage: 2,	// Mice
-	        dwFlags: RIDEV_INPUTSINK,
-	        hwndTarget:  self.hwnd,
-            };
-            rid_vec.push(rid);
-        }
-
-
-        if self.gamepad_input{
-            let rid = RAWINPUTDEVICE{
-	        usUsagePage: 1,
-	        usUsage: 5,	// Gamepads
-	        dwFlags: RIDEV_INPUTSINK,
-	        hwndTarget:  self.hwnd,
-            };
-            rid_vec.push(rid);
-        }
-
-
-        if self.keyboard_input{
-            let rid = RAWINPUTDEVICE{
-	        usUsagePage: 1,
-	        usUsage: 6,	// Keyboards
-	        dwFlags: RIDEV_INPUTSINK,
-	        hwndTarget:  self.hwnd,
-            };
-            rid_vec.push(rid);
-        }
-
-        unsafe{
-            if RegisterRawInputDevices(rid_vec.as_mut_ptr(), rid_vec.len() as UINT, mem::size_of::<RAWINPUTDEVICE>() as UINT) ==0 {
-	        return Err("Registration of Controller Failed");
-            }
-        }
-        self.devices = produce_raw_device_list();
-        Ok(self)
-    }
-
-
-    pub fn read_input_buffer(&mut self){
-        unsafe{
-            let mut array_alloc: [u8;1024] = mem::uninitialized();
-            let mut buffer_size: UINT = 0;
-
-            let mut numberofelements: i32 = GetRawInputBuffer(ptr::null_mut(),
-                                                              &mut buffer_size,
-                                                              mem::size_of::<RAWINPUTHEADER>() as UINT) as INT;
-            if numberofelements as INT == -1{
-                panic!("GetRawInputBuffer Gave Error on First Call!");
-            }
-            buffer_size = 1024;
-            numberofelements = GetRawInputBuffer(array_alloc.as_mut_ptr() as PRAWINPUT,
-                                                 &mut buffer_size,
-                                                 mem::size_of::<RAWINPUTHEADER>() as UINT) as INT;
-
-            if numberofelements as INT == -1{
-                panic!("GetRawInputBuffer Gave Error on Second Call!");
-            }
-
-            let mut array_ptr = array_alloc.as_mut_ptr();
-
-            for _ in 0..numberofelements as u32{
-                let header = (*(array_ptr as *mut RAWINPUT)).header;
-                let raw_input_ptr = derive_rawinput_type(array_ptr as *mut RAWINPUT);
-                array_ptr = array_ptr.offset(header.dwSize as isize);
-                let pos = match self.devices.device_map.get(&header.hDevice){
-                    Some(item) => *item,
-                    None => continue,
-                };
-                match raw_input_ptr{
-                    RAWINPUTTYPE::MOUSE(pointer) => {
-                        let value = *pointer;
-                        self.event_queue.extend(process_mouse_data(&value.data, pos));
-                    }
-                    _ => (),
-                }
-            }
-        }
-    }
-
-    pub fn get_event(&mut self) -> Option<RawEvent>{
-        if self.event_queue.is_empty(){
-            self.read_input_buffer();
-        }
-        let event = self.event_queue.pop_front();
-        event
-    }
 }
