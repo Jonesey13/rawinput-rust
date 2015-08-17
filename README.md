@@ -2,15 +2,15 @@
 Rawinput API for Rust on Windows. Allows for the detection of individual mice and keyboards.
 
 ## Examples:
-### Individual Mouse Click Detection (Requires at least two mice!):
+### Individual Mouse Detection:
 cargo run --example apitest
 
 ## Current Status:
-VERY EARLY Proof of Concept Stage. Mouse click support only.
+EARLY Proof of Concept Stage. Basic mouse support only.
 
 ### Short Term Goals: 
 * Full Mouse and Keyboard Support
-* Run in a separate thread to prevent interference with other libraries' message loops.
+* Run in a separate thread to prevent interference with other libraries' message loops
 
 ### Medium Term Goals:
 * Add HID Support
