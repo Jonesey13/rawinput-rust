@@ -1,6 +1,6 @@
 [package]
 name = "rawlib"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Jonesey13 <adj27@cam.ac.uk>"]
 
 [dependencies]
