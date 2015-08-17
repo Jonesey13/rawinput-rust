@@ -78,16 +78,10 @@ pub enum MouseButton {
 }
 
 #[derive(Clone)]
-pub enum MouseDirection {
-    X,
-    Y,
-}
-
-#[derive(Clone)]
 pub enum RawEvent {
     MouseButtonEvent(usize,MouseButton,ButtonState),
-    MouseMoveEvent(usize,MouseDirection,isize),
-    MouseWheelEvent(usize,isize),
+    MouseMoveEvent(usize,i32,i32),
+    MouseWheelEvent(usize,u16),
 }
 
 #[derive(Clone)]
@@ -164,7 +158,6 @@ impl RawInputManager {
                 };
             };
         });
-
         Ok(RawInputManager{
             joiner: Some(joiner),
             sender: tx,
@@ -426,25 +419,33 @@ pub fn print_raw_device_list () {
 }
 
 fn process_mouse_data(raw_data: &RAWMOUSE, id: usize) -> Vec<RawEvent> {
-    let buttons = &raw_data.usButtonFlags;
+    let cursor = (raw_data.lLastX, raw_data.lLastY);
+    let buttons = raw_data.usButtonFlags;
     let mut output: Vec<RawEvent> = Vec::new();
-    if *buttons & RI_MOUSE_LEFT_BUTTON_DOWN != 0{
+    if buttons & RI_MOUSE_LEFT_BUTTON_DOWN != 0{
         output.push(RawEvent::MouseButtonEvent(id, MouseButton::Left, ButtonState::Pressed ));
     }
-    if *buttons & RI_MOUSE_LEFT_BUTTON_UP != 0{
+    if buttons & RI_MOUSE_LEFT_BUTTON_UP != 0{
         output.push(RawEvent::MouseButtonEvent(id, MouseButton::Left, ButtonState::Released ));
     }
-    if *buttons & RI_MOUSE_RIGHT_BUTTON_DOWN != 0{
+    if buttons & RI_MOUSE_RIGHT_BUTTON_DOWN != 0{
         output.push(RawEvent::MouseButtonEvent(id, MouseButton::Right, ButtonState::Pressed ));
     }
-    if *buttons & RI_MOUSE_RIGHT_BUTTON_UP != 0{
+    if buttons & RI_MOUSE_RIGHT_BUTTON_UP != 0{
         output.push(RawEvent::MouseButtonEvent(id, MouseButton::Right, ButtonState::Released ));
     }
-    if *buttons & RI_MOUSE_MIDDLE_BUTTON_DOWN != 0{
+    if buttons & RI_MOUSE_MIDDLE_BUTTON_DOWN != 0{
         output.push(RawEvent::MouseButtonEvent(id, MouseButton::Middle, ButtonState::Pressed ));
     }
-    if *buttons & RI_MOUSE_MIDDLE_BUTTON_UP != 0{
+    if buttons & RI_MOUSE_MIDDLE_BUTTON_UP != 0{
         output.push(RawEvent::MouseButtonEvent(id, MouseButton::Middle, ButtonState::Released ));
+    }
+    if buttons & RI_MOUSE_WHEEL != 0{
+        let wheel_data = raw_data.usButtonData;
+        output.push(RawEvent::MouseWheelEvent(id, wheel_data));
+    }
+    if (cursor.0 != 0) || (cursor.1 != 0) {
+        output.push(RawEvent::MouseMoveEvent(id, cursor.0, cursor.1));
     }
     output
 }
