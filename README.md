@@ -6,6 +6,8 @@ Rawinput API for Rust on Windows. Allows for the detection of individual mice an
 ## Examples:
 ### Individual Mouse Detection:
 cargo run --example apitest
+### Glium Integration Example
+cargo run --example separatemouse
 
 ## Current Status:
 EARLY Proof of Concept Stage. Basic mouse support only.
