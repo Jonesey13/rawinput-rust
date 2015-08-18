@@ -22,6 +22,19 @@ use std::sync::mpsc::{
     channel
 };
 
+#[repr(C)] #[derive(Clone, Copy, Debug)]
+pub struct RAWMOUSEMOD {
+    pub usFlags: USHORT,
+    pub memory_padding: USHORT, // 16bit Padding for 32bit align in following union
+    pub usButtonFlags: USHORT,
+    pub usButtonData: USHORT,
+    pub ulRawButtons: ULONG,
+    pub lLastX: LONG,
+    pub lLastY: LONG,
+    pub ulExtraInformation: ULONG,
+}
+
+pub const HWND_MESSAGE: HWND = -3isize as HWND;
 
 #[test]
 fn it_works() {
@@ -36,7 +49,7 @@ struct RAWINPUTHID {
 #[repr(C)] #[derive(Clone, Copy, Debug)]
 struct RAWINPUTMOUSE {
     pub header: RAWINPUTHEADER,
-    pub data: RAWMOUSE,
+    pub data: RAWMOUSEMOD,
 }
 
 
@@ -104,7 +117,7 @@ pub struct Devices{
     pub mice: Vec<Mouse>,
     pub keyboards: Vec<Keyboard>,
     pub hids: Vec<Hid>,
-    pub device_map: HashMap<HANDLE, usize>,
+    device_map: HashMap<HANDLE, usize>,
 }
 
 impl Devices{
@@ -152,7 +165,7 @@ impl RawInputManager {
             while !exit {
                 match  rx.recv().unwrap(){
                     Command::Register(thing) => {devices = register_devices(hwnd, thing).unwrap();
-                                                  tx2.send(None).unwrap();},
+                                                 tx2.send(None).unwrap();},
                     Command::GetEvent => {tx2.send(get_event(&mut event_queue, &devices)).unwrap();},
                     Command::Finish => {exit = true;},
                 };
@@ -373,8 +386,8 @@ pub fn produce_raw_device_list() -> Devices {
                         device_list.device_map.insert(device_handle, pos.0);
                     }
                     else{
-                        device_list.mice.push(Mouse{name: name});
                         device_list.device_map.insert(device_handle, device_list.mice.len());
+                        device_list.mice.push(Mouse{name: name});
                     }
                 },
                 RIM_TYPEKEYBOARD => {
@@ -382,8 +395,8 @@ pub fn produce_raw_device_list() -> Devices {
                         device_list.device_map.insert(device_handle, pos.0);
                     }
                     else{
-                        device_list.keyboards.push(Keyboard{name: name});
                         device_list.device_map.insert(device_handle, device_list.keyboards.len());
+                        device_list.keyboards.push(Keyboard{name: name});
                     }
                 },
                 RIM_TYPEHID => {
@@ -391,8 +404,8 @@ pub fn produce_raw_device_list() -> Devices {
                         device_list.device_map.insert(device_handle, pos.0);
                     }
                     else{
-                        device_list.hids.push(Hid{name: name});
                         device_list.device_map.insert(device_handle, device_list.hids.len());
+                        device_list.hids.push(Hid{name: name});
                     }
                 },
                 _ => (),
@@ -418,7 +431,7 @@ pub fn print_raw_device_list () {
     }
 }
 
-fn process_mouse_data(raw_data: &RAWMOUSE, id: usize) -> Vec<RawEvent> {
+fn process_mouse_data(raw_data: &RAWMOUSEMOD, id: usize) -> Vec<RawEvent> {
     let cursor = (raw_data.lLastX, raw_data.lLastY);
     let buttons = raw_data.usButtonFlags;
     let mut output: Vec<RawEvent> = Vec::new();

@@ -63,7 +63,7 @@ impl<'a> Handler<'a>{
         let devices = produce_raw_device_list();
         let total_mice = devices.mice.len();
         let mut vertices: Vec<Part> = Vec::new();
-        for _ in 0..(total_mice+1){
+        for _ in 0..(total_mice){
             vertices.push(Part{pos:[0.0,0.0], color: [1.0,1.0,1.0,1.0]});
         }
         let players = Players{players: vertices};
