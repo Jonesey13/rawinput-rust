@@ -452,65 +452,20 @@
 <span id="410">410</span>
 <span id="411">411</span>
 <span id="412">412</span>
-<span id="413">413</span>
-<span id="414">414</span>
-<span id="415">415</span>
-<span id="416">416</span>
-<span id="417">417</span>
-<span id="418">418</span>
-<span id="419">419</span>
-<span id="420">420</span>
-<span id="421">421</span>
-<span id="422">422</span>
-<span id="423">423</span>
-<span id="424">424</span>
-<span id="425">425</span>
-<span id="426">426</span>
-<span id="427">427</span>
-<span id="428">428</span>
-<span id="429">429</span>
-<span id="430">430</span>
-<span id="431">431</span>
-<span id="432">432</span>
-<span id="433">433</span>
-<span id="434">434</span>
-<span id="435">435</span>
-<span id="436">436</span>
-<span id="437">437</span>
-<span id="438">438</span>
-<span id="439">439</span>
-<span id="440">440</span>
-<span id="441">441</span>
-<span id="442">442</span>
-<span id="443">443</span>
-<span id="444">444</span>
-<span id="445">445</span>
-<span id="446">446</span>
-<span id="447">447</span>
-<span id="448">448</span>
-<span id="449">449</span>
-<span id="450">450</span>
-<span id="451">451</span>
-<span id="452">452</span>
-<span id="453">453</span>
-<span id="454">454</span>
-<span id="455">455</span>
-<span id="456">456</span>
-<span id="457">457</span>
-<span id="458">458</span>
-<span id="459">459</span>
-<span id="460">460</span>
-<span id="461">461</span>
-<span id="462">462</span>
-<span id="463">463</span>
-<span id="464">464</span>
 </pre><pre class='rust '>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>winapi</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>kernel32</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>user32</span>;
 
+<span class='kw'>mod</span> <span class='ident'>mouse</span>;
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>event</span>;
+<span class='kw'>mod</span> <span class='ident'>keyboard</span>;
 
+
+<span class='kw'>use</span> <span class='ident'>mouse</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>keyboard</span>::<span class='op'>*</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>event</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>winapi</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>user32</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>kernel32</span>::<span class='op'>*</span>;
@@ -529,19 +484,8 @@
     <span class='ident'>channel</span>
 };
 
-<span class='attribute'>#[<span class='ident'>repr</span>(<span class='ident'>C</span>)]</span> <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Copy</span>, <span class='ident'>Debug</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>RAWMOUSEMOD</span> {
-    <span class='kw'>pub</span> <span class='ident'>usFlags</span>: <span class='ident'>USHORT</span>,
-    <span class='kw'>pub</span> <span class='ident'>memory_padding</span>: <span class='ident'>USHORT</span>, <span class='comment'>// 16bit Padding for 32bit align in following union</span>
-    <span class='kw'>pub</span> <span class='ident'>usButtonFlags</span>: <span class='ident'>USHORT</span>,
-    <span class='kw'>pub</span> <span class='ident'>usButtonData</span>: <span class='ident'>USHORT</span>,
-    <span class='kw'>pub</span> <span class='ident'>ulRawButtons</span>: <span class='ident'>ULONG</span>,
-    <span class='kw'>pub</span> <span class='ident'>lLastX</span>: <span class='ident'>LONG</span>,
-    <span class='kw'>pub</span> <span class='ident'>lLastY</span>: <span class='ident'>LONG</span>,
-    <span class='kw'>pub</span> <span class='ident'>ulExtraInformation</span>: <span class='ident'>ULONG</span>,
-}
-
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>HWND_MESSAGE</span>: <span class='ident'>HWND</span> <span class='op'>=</span> <span class='op'>-</span><span class='number'>3isize</span> <span class='kw'>as</span> <span class='ident'>HWND</span>;
+
 
 <span class='attribute'>#[<span class='ident'>test</span>]</span>
 <span class='kw'>fn</span> <span class='ident'>it_works</span>() {
@@ -582,26 +526,6 @@
         <span class='ident'>RIM_TYPEHID</span> <span class='op'>=&gt;</span> <span class='ident'>HID</span>(<span class='ident'>input</span> <span class='kw'>as</span> <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>RAWINPUTHID</span>),
         _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Should be Unreachable!&quot;</span>),
     }
-}
-
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>ButtonState</span> {
-    <span class='ident'>Pressed</span>,
-    <span class='ident'>Released</span>,
-}
-
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>MouseButton</span> {
-    <span class='ident'>Left</span>,
-    <span class='ident'>Right</span>,
-    <span class='ident'>Middle</span>,
-}
-
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>RawEvent</span> {
-    <span class='ident'>MouseButtonEvent</span>(<span class='ident'>usize</span>,<span class='ident'>MouseButton</span>,<span class='ident'>ButtonState</span>),
-    <span class='ident'>MouseMoveEvent</span>(<span class='ident'>usize</span>,<span class='ident'>i32</span>,<span class='ident'>i32</span>),
-    <span class='ident'>MouseWheelEvent</span>(<span class='ident'>usize</span>,<span class='ident'>u16</span>),
 }
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
@@ -783,6 +707,10 @@
                     <span class='kw'>let</span> <span class='ident'>value</span> <span class='op'>=</span> <span class='op'>*</span><span class='ident'>pointer</span>;
                     <span class='ident'>event_queue</span>.<span class='ident'>extend</span>(<span class='ident'>process_mouse_data</span>(<span class='kw-2'>&amp;</span><span class='ident'>value</span>.<span class='ident'>data</span>, <span class='ident'>pos</span>));
                 }
+                <span class='ident'>RAWINPUTTYPE</span>::<span class='ident'>KEYBOARD</span>(<span class='ident'>pointer</span>) <span class='op'>=&gt;</span> {
+                    <span class='kw'>let</span> <span class='ident'>value</span> <span class='op'>=</span> <span class='op'>*</span><span class='ident'>pointer</span>;
+                    <span class='ident'>event_queue</span>.<span class='ident'>extend</span>(<span class='ident'>process_keyboard_data</span>(<span class='kw-2'>&amp;</span><span class='ident'>value</span>.<span class='ident'>data</span>, <span class='ident'>pos</span>));
+                }
                 _ <span class='op'>=&gt;</span> (),
             }
         }
@@ -936,38 +864,6 @@
     <span class='kw'>for</span> <span class='ident'>hid</span> <span class='kw'>in</span> <span class='ident'>device_list</span>.<span class='ident'>hids</span>{
         <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>hid</span>.<span class='ident'>name</span>);
     }
-}
-
-<span class='kw'>fn</span> <span class='ident'>process_mouse_data</span>(<span class='ident'>raw_data</span>: <span class='kw-2'>&amp;</span><span class='ident'>RAWMOUSEMOD</span>, <span class='ident'>id</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>RawEvent</span><span class='op'>&gt;</span> {
-    <span class='kw'>let</span> <span class='ident'>cursor</span> <span class='op'>=</span> (<span class='ident'>raw_data</span>.<span class='ident'>lLastX</span>, <span class='ident'>raw_data</span>.<span class='ident'>lLastY</span>);
-    <span class='kw'>let</span> <span class='ident'>buttons</span> <span class='op'>=</span> <span class='ident'>raw_data</span>.<span class='ident'>usButtonFlags</span>;
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>output</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>RawEvent</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
-    <span class='kw'>if</span> <span class='ident'>buttons</span> <span class='kw-2'>&amp;</span> <span class='ident'>RI_MOUSE_LEFT_BUTTON_DOWN</span> <span class='op'>!=</span> <span class='number'>0</span>{
-        <span class='ident'>output</span>.<span class='ident'>push</span>(<span class='ident'>RawEvent</span>::<span class='ident'>MouseButtonEvent</span>(<span class='ident'>id</span>, <span class='ident'>MouseButton</span>::<span class='ident'>Left</span>, <span class='ident'>ButtonState</span>::<span class='ident'>Pressed</span> ));
-    }
-    <span class='kw'>if</span> <span class='ident'>buttons</span> <span class='kw-2'>&amp;</span> <span class='ident'>RI_MOUSE_LEFT_BUTTON_UP</span> <span class='op'>!=</span> <span class='number'>0</span>{
-        <span class='ident'>output</span>.<span class='ident'>push</span>(<span class='ident'>RawEvent</span>::<span class='ident'>MouseButtonEvent</span>(<span class='ident'>id</span>, <span class='ident'>MouseButton</span>::<span class='ident'>Left</span>, <span class='ident'>ButtonState</span>::<span class='ident'>Released</span> ));
-    }
-    <span class='kw'>if</span> <span class='ident'>buttons</span> <span class='kw-2'>&amp;</span> <span class='ident'>RI_MOUSE_RIGHT_BUTTON_DOWN</span> <span class='op'>!=</span> <span class='number'>0</span>{
-        <span class='ident'>output</span>.<span class='ident'>push</span>(<span class='ident'>RawEvent</span>::<span class='ident'>MouseButtonEvent</span>(<span class='ident'>id</span>, <span class='ident'>MouseButton</span>::<span class='ident'>Right</span>, <span class='ident'>ButtonState</span>::<span class='ident'>Pressed</span> ));
-    }
-    <span class='kw'>if</span> <span class='ident'>buttons</span> <span class='kw-2'>&amp;</span> <span class='ident'>RI_MOUSE_RIGHT_BUTTON_UP</span> <span class='op'>!=</span> <span class='number'>0</span>{
-        <span class='ident'>output</span>.<span class='ident'>push</span>(<span class='ident'>RawEvent</span>::<span class='ident'>MouseButtonEvent</span>(<span class='ident'>id</span>, <span class='ident'>MouseButton</span>::<span class='ident'>Right</span>, <span class='ident'>ButtonState</span>::<span class='ident'>Released</span> ));
-    }
-    <span class='kw'>if</span> <span class='ident'>buttons</span> <span class='kw-2'>&amp;</span> <span class='ident'>RI_MOUSE_MIDDLE_BUTTON_DOWN</span> <span class='op'>!=</span> <span class='number'>0</span>{
-        <span class='ident'>output</span>.<span class='ident'>push</span>(<span class='ident'>RawEvent</span>::<span class='ident'>MouseButtonEvent</span>(<span class='ident'>id</span>, <span class='ident'>MouseButton</span>::<span class='ident'>Middle</span>, <span class='ident'>ButtonState</span>::<span class='ident'>Pressed</span> ));
-    }
-    <span class='kw'>if</span> <span class='ident'>buttons</span> <span class='kw-2'>&amp;</span> <span class='ident'>RI_MOUSE_MIDDLE_BUTTON_UP</span> <span class='op'>!=</span> <span class='number'>0</span>{
-        <span class='ident'>output</span>.<span class='ident'>push</span>(<span class='ident'>RawEvent</span>::<span class='ident'>MouseButtonEvent</span>(<span class='ident'>id</span>, <span class='ident'>MouseButton</span>::<span class='ident'>Middle</span>, <span class='ident'>ButtonState</span>::<span class='ident'>Released</span> ));
-    }
-    <span class='kw'>if</span> <span class='ident'>buttons</span> <span class='kw-2'>&amp;</span> <span class='ident'>RI_MOUSE_WHEEL</span> <span class='op'>!=</span> <span class='number'>0</span>{
-        <span class='kw'>let</span> <span class='ident'>wheel_data</span> <span class='op'>=</span> <span class='ident'>raw_data</span>.<span class='ident'>usButtonData</span>;
-        <span class='ident'>output</span>.<span class='ident'>push</span>(<span class='ident'>RawEvent</span>::<span class='ident'>MouseWheelEvent</span>(<span class='ident'>id</span>, <span class='ident'>wheel_data</span>));
-    }
-    <span class='kw'>if</span> (<span class='ident'>cursor</span>.<span class='number'>0</span> <span class='op'>!=</span> <span class='number'>0</span>) <span class='op'>||</span> (<span class='ident'>cursor</span>.<span class='number'>1</span> <span class='op'>!=</span> <span class='number'>0</span>) {
-        <span class='ident'>output</span>.<span class='ident'>push</span>(<span class='ident'>RawEvent</span>::<span class='ident'>MouseMoveEvent</span>(<span class='ident'>id</span>, <span class='ident'>cursor</span>.<span class='number'>0</span>, <span class='ident'>cursor</span>.<span class='number'>1</span>));
-    }
-    <span class='ident'>output</span>
 }
 </pre>
 </section>
