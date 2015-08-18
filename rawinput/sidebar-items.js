@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["ButtonState",""],["DeviceType",""],["MouseButton",""],["RawEvent",""]],"fn":[["print_raw_device_list",""],["produce_raw_device_list",""]],"struct":[["Devices",""],["Hid",""],["Keyboard",""],["Mouse",""],["RawInputManager",""]]});
+initSidebarItems({"constant":[["HWND_MESSAGE",""]],"enum":[["ButtonState",""],["DeviceType",""],["MouseButton",""],["RawEvent",""]],"fn":[["print_raw_device_list",""],["produce_raw_device_list",""]],"struct":[["Devices",""],["Hid",""],["Keyboard",""],["Mouse",""],["RAWMOUSEMOD",""],["RawInputManager",""]]});

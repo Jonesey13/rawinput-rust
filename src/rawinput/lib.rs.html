@@ -491,6 +491,19 @@
 <span id="449">449</span>
 <span id="450">450</span>
 <span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
 </pre><pre class='rust '>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>winapi</span>;
@@ -516,6 +529,19 @@
     <span class='ident'>channel</span>
 };
 
+<span class='attribute'>#[<span class='ident'>repr</span>(<span class='ident'>C</span>)]</span> <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Copy</span>, <span class='ident'>Debug</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>RAWMOUSEMOD</span> {
+    <span class='kw'>pub</span> <span class='ident'>usFlags</span>: <span class='ident'>USHORT</span>,
+    <span class='kw'>pub</span> <span class='ident'>memory_padding</span>: <span class='ident'>USHORT</span>, <span class='comment'>// 16bit Padding for 32bit align in following union</span>
+    <span class='kw'>pub</span> <span class='ident'>usButtonFlags</span>: <span class='ident'>USHORT</span>,
+    <span class='kw'>pub</span> <span class='ident'>usButtonData</span>: <span class='ident'>USHORT</span>,
+    <span class='kw'>pub</span> <span class='ident'>ulRawButtons</span>: <span class='ident'>ULONG</span>,
+    <span class='kw'>pub</span> <span class='ident'>lLastX</span>: <span class='ident'>LONG</span>,
+    <span class='kw'>pub</span> <span class='ident'>lLastY</span>: <span class='ident'>LONG</span>,
+    <span class='kw'>pub</span> <span class='ident'>ulExtraInformation</span>: <span class='ident'>ULONG</span>,
+}
+
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>HWND_MESSAGE</span>: <span class='ident'>HWND</span> <span class='op'>=</span> <span class='op'>-</span><span class='number'>3isize</span> <span class='kw'>as</span> <span class='ident'>HWND</span>;
 
 <span class='attribute'>#[<span class='ident'>test</span>]</span>
 <span class='kw'>fn</span> <span class='ident'>it_works</span>() {
@@ -530,7 +556,7 @@
 <span class='attribute'>#[<span class='ident'>repr</span>(<span class='ident'>C</span>)]</span> <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Copy</span>, <span class='ident'>Debug</span>)]</span>
 <span class='kw'>struct</span> <span class='ident'>RAWINPUTMOUSE</span> {
     <span class='kw'>pub</span> <span class='ident'>header</span>: <span class='ident'>RAWINPUTHEADER</span>,
-    <span class='kw'>pub</span> <span class='ident'>data</span>: <span class='ident'>RAWMOUSE</span>,
+    <span class='kw'>pub</span> <span class='ident'>data</span>: <span class='ident'>RAWMOUSEMOD</span>,
 }
 
 
@@ -598,7 +624,7 @@
     <span class='kw'>pub</span> <span class='ident'>mice</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Mouse</span><span class='op'>&gt;</span>,
     <span class='kw'>pub</span> <span class='ident'>keyboards</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Keyboard</span><span class='op'>&gt;</span>,
     <span class='kw'>pub</span> <span class='ident'>hids</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Hid</span><span class='op'>&gt;</span>,
-    <span class='kw'>pub</span> <span class='ident'>device_map</span>: <span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>HANDLE</span>, <span class='ident'>usize</span><span class='op'>&gt;</span>,
+    <span class='ident'>device_map</span>: <span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>HANDLE</span>, <span class='ident'>usize</span><span class='op'>&gt;</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>Devices</span>{
@@ -646,7 +672,7 @@
             <span class='kw'>while</span> <span class='op'>!</span><span class='ident'>exit</span> {
                 <span class='kw'>match</span>  <span class='ident'>rx</span>.<span class='ident'>recv</span>().<span class='ident'>unwrap</span>(){
                     <span class='ident'>Command</span>::<span class='ident'>Register</span>(<span class='ident'>thing</span>) <span class='op'>=&gt;</span> {<span class='ident'>devices</span> <span class='op'>=</span> <span class='ident'>register_devices</span>(<span class='ident'>hwnd</span>, <span class='ident'>thing</span>).<span class='ident'>unwrap</span>();
-                                                  <span class='ident'>tx2</span>.<span class='ident'>send</span>(<span class='prelude-val'>None</span>).<span class='ident'>unwrap</span>();},
+                                                 <span class='ident'>tx2</span>.<span class='ident'>send</span>(<span class='prelude-val'>None</span>).<span class='ident'>unwrap</span>();},
                     <span class='ident'>Command</span>::<span class='ident'>GetEvent</span> <span class='op'>=&gt;</span> {<span class='ident'>tx2</span>.<span class='ident'>send</span>(<span class='ident'>get_event</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>event_queue</span>, <span class='kw-2'>&amp;</span><span class='ident'>devices</span>)).<span class='ident'>unwrap</span>();},
                     <span class='ident'>Command</span>::<span class='ident'>Finish</span> <span class='op'>=&gt;</span> {<span class='ident'>exit</span> <span class='op'>=</span> <span class='boolval'>true</span>;},
                 };
@@ -867,8 +893,8 @@
                         <span class='ident'>device_list</span>.<span class='ident'>device_map</span>.<span class='ident'>insert</span>(<span class='ident'>device_handle</span>, <span class='ident'>pos</span>.<span class='number'>0</span>);
                     }
                     <span class='kw'>else</span>{
-                        <span class='ident'>device_list</span>.<span class='ident'>mice</span>.<span class='ident'>push</span>(<span class='ident'>Mouse</span>{<span class='ident'>name</span>: <span class='ident'>name</span>});
                         <span class='ident'>device_list</span>.<span class='ident'>device_map</span>.<span class='ident'>insert</span>(<span class='ident'>device_handle</span>, <span class='ident'>device_list</span>.<span class='ident'>mice</span>.<span class='ident'>len</span>());
+                        <span class='ident'>device_list</span>.<span class='ident'>mice</span>.<span class='ident'>push</span>(<span class='ident'>Mouse</span>{<span class='ident'>name</span>: <span class='ident'>name</span>});
                     }
                 },
                 <span class='ident'>RIM_TYPEKEYBOARD</span> <span class='op'>=&gt;</span> {
@@ -876,8 +902,8 @@
                         <span class='ident'>device_list</span>.<span class='ident'>device_map</span>.<span class='ident'>insert</span>(<span class='ident'>device_handle</span>, <span class='ident'>pos</span>.<span class='number'>0</span>);
                     }
                     <span class='kw'>else</span>{
-                        <span class='ident'>device_list</span>.<span class='ident'>keyboards</span>.<span class='ident'>push</span>(<span class='ident'>Keyboard</span>{<span class='ident'>name</span>: <span class='ident'>name</span>});
                         <span class='ident'>device_list</span>.<span class='ident'>device_map</span>.<span class='ident'>insert</span>(<span class='ident'>device_handle</span>, <span class='ident'>device_list</span>.<span class='ident'>keyboards</span>.<span class='ident'>len</span>());
+                        <span class='ident'>device_list</span>.<span class='ident'>keyboards</span>.<span class='ident'>push</span>(<span class='ident'>Keyboard</span>{<span class='ident'>name</span>: <span class='ident'>name</span>});
                     }
                 },
                 <span class='ident'>RIM_TYPEHID</span> <span class='op'>=&gt;</span> {
@@ -885,8 +911,8 @@
                         <span class='ident'>device_list</span>.<span class='ident'>device_map</span>.<span class='ident'>insert</span>(<span class='ident'>device_handle</span>, <span class='ident'>pos</span>.<span class='number'>0</span>);
                     }
                     <span class='kw'>else</span>{
-                        <span class='ident'>device_list</span>.<span class='ident'>hids</span>.<span class='ident'>push</span>(<span class='ident'>Hid</span>{<span class='ident'>name</span>: <span class='ident'>name</span>});
                         <span class='ident'>device_list</span>.<span class='ident'>device_map</span>.<span class='ident'>insert</span>(<span class='ident'>device_handle</span>, <span class='ident'>device_list</span>.<span class='ident'>hids</span>.<span class='ident'>len</span>());
+                        <span class='ident'>device_list</span>.<span class='ident'>hids</span>.<span class='ident'>push</span>(<span class='ident'>Hid</span>{<span class='ident'>name</span>: <span class='ident'>name</span>});
                     }
                 },
                 _ <span class='op'>=&gt;</span> (),
@@ -912,7 +938,7 @@
     }
 }
 
-<span class='kw'>fn</span> <span class='ident'>process_mouse_data</span>(<span class='ident'>raw_data</span>: <span class='kw-2'>&amp;</span><span class='ident'>RAWMOUSE</span>, <span class='ident'>id</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>RawEvent</span><span class='op'>&gt;</span> {
+<span class='kw'>fn</span> <span class='ident'>process_mouse_data</span>(<span class='ident'>raw_data</span>: <span class='kw-2'>&amp;</span><span class='ident'>RAWMOUSEMOD</span>, <span class='ident'>id</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>RawEvent</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> <span class='ident'>cursor</span> <span class='op'>=</span> (<span class='ident'>raw_data</span>.<span class='ident'>lLastX</span>, <span class='ident'>raw_data</span>.<span class='ident'>lLastY</span>);
     <span class='kw'>let</span> <span class='ident'>buttons</span> <span class='op'>=</span> <span class='ident'>raw_data</span>.<span class='ident'>usButtonFlags</span>;
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>output</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>RawEvent</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
