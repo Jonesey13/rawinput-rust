@@ -1,5 +1,5 @@
 # rawinput-rust
-Rawinput API for Rust on Windows. Allows for the detection of individual mice and keyboards.
+Rawinput API for Rust on Windows. Allows for the detection of individual mice and keyboards. Runs in a separate thread to avoid conflict with other input systems.
 
 [Documentation](http://jonesey13.github.io/rawinput-rust/rawinput/index.html)
 
@@ -14,7 +14,6 @@ EARLY Proof of Concept Stage. Basic mouse support only.
 
 ### Short Term Goals: 
 * Full Mouse and Keyboard Support
-* Run in a separate thread to prevent interference with other libraries' message loops
 
 ### Medium Term Goals:
 * Add HID Support
