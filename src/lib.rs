@@ -3,7 +3,14 @@ extern crate winapi;
 extern crate kernel32;
 extern crate user32;
 
+mod mouse;
+pub mod event;
+mod keyboard;
 
+
+use mouse::*;
+use keyboard::*;
+pub use event::*;
 use winapi::*;
 use user32::*;
 use kernel32::*;
@@ -22,19 +29,8 @@ use std::sync::mpsc::{
     channel
 };
 
-#[repr(C)] #[derive(Clone, Copy, Debug)]
-pub struct RAWMOUSEMOD {
-    pub usFlags: USHORT,
-    pub memory_padding: USHORT, // 16bit Padding for 32bit align in following union
-    pub usButtonFlags: USHORT,
-    pub usButtonData: USHORT,
-    pub ulRawButtons: ULONG,
-    pub lLastX: LONG,
-    pub lLastY: LONG,
-    pub ulExtraInformation: ULONG,
-}
-
 pub const HWND_MESSAGE: HWND = -3isize as HWND;
+
 
 #[test]
 fn it_works() {
@@ -75,26 +71,6 @@ unsafe fn derive_rawinput_type(input: *mut RAWINPUT) -> RAWINPUTTYPE {
         RIM_TYPEHID => HID(input as *mut RAWINPUTHID),
         _ => panic!("Should be Unreachable!"),
     }
-}
-
-#[derive(Clone)]
-pub enum ButtonState {
-    Pressed,
-    Released,
-}
-
-#[derive(Clone)]
-pub enum MouseButton {
-    Left,
-    Right,
-    Middle,
-}
-
-#[derive(Clone)]
-pub enum RawEvent {
-    MouseButtonEvent(usize,MouseButton,ButtonState),
-    MouseMoveEvent(usize,i32,i32),
-    MouseWheelEvent(usize,u16),
 }
 
 #[derive(Clone)]
@@ -276,6 +252,10 @@ fn read_input_buffer(event_queue: &mut VecDeque<RawEvent>, devices: &Devices){
                     let value = *pointer;
                     event_queue.extend(process_mouse_data(&value.data, pos));
                 }
+                RAWINPUTTYPE::KEYBOARD(pointer) => {
+                    let value = *pointer;
+                    event_queue.extend(process_keyboard_data(&value.data, pos));
+                }
                 _ => (),
             }
         }
@@ -429,36 +409,4 @@ pub fn print_raw_device_list () {
     for hid in device_list.hids{
         println!("{}", hid.name);
     }
-}
-
-fn process_mouse_data(raw_data: &RAWMOUSEMOD, id: usize) -> Vec<RawEvent> {
-    let cursor = (raw_data.lLastX, raw_data.lLastY);
-    let buttons = raw_data.usButtonFlags;
-    let mut output: Vec<RawEvent> = Vec::new();
-    if buttons & RI_MOUSE_LEFT_BUTTON_DOWN != 0{
-        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Left, ButtonState::Pressed ));
-    }
-    if buttons & RI_MOUSE_LEFT_BUTTON_UP != 0{
-        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Left, ButtonState::Released ));
-    }
-    if buttons & RI_MOUSE_RIGHT_BUTTON_DOWN != 0{
-        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Right, ButtonState::Pressed ));
-    }
-    if buttons & RI_MOUSE_RIGHT_BUTTON_UP != 0{
-        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Right, ButtonState::Released ));
-    }
-    if buttons & RI_MOUSE_MIDDLE_BUTTON_DOWN != 0{
-        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Middle, ButtonState::Pressed ));
-    }
-    if buttons & RI_MOUSE_MIDDLE_BUTTON_UP != 0{
-        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Middle, ButtonState::Released ));
-    }
-    if buttons & RI_MOUSE_WHEEL != 0{
-        let wheel_data = raw_data.usButtonData;
-        output.push(RawEvent::MouseWheelEvent(id, wheel_data));
-    }
-    if (cursor.0 != 0) || (cursor.1 != 0) {
-        output.push(RawEvent::MouseMoveEvent(id, cursor.0, cursor.1));
-    }
-    output
 }
