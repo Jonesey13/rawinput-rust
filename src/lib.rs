@@ -101,10 +101,10 @@ pub struct Hid {
 
 #[derive(Clone)]
 pub struct Devices{
-    mice: Vec<Mouse>,
-    keyboards: Vec<Keyboard>,
-    hids: Vec<Hid>,
-    device_map: HashMap<HANDLE, usize>,
+    pub mice: Vec<Mouse>,
+    pub keyboards: Vec<Keyboard>,
+    pub hids: Vec<Hid>,
+    pub device_map: HashMap<HANDLE, usize>,
 }
 
 impl Devices{
@@ -325,7 +325,7 @@ fn setup_message_window() -> HWND{
     hwnd
 }
 
-fn produce_raw_device_list() -> Devices {
+pub fn produce_raw_device_list() -> Devices {
     let mut device_list = Devices::new();
     unsafe{
         let mut buffer: [u8; 10000] = mem::uninitialized();
