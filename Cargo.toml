@@ -1,6 +1,6 @@
 [package]
-name = "rawlib"
-version = "0.1.2"
+name = "rawinput"
+version = "0.1.3"
 authors = ["Jonesey13 <adj27@cam.ac.uk>"]
 
 [dependencies]
@@ -8,5 +8,7 @@ libc = "*"
 winapi = "*"
 kernel32-sys = "*"
 user32-sys = "*"
+
+[dev-dependencies]
 time = "*"
 glium = "*"

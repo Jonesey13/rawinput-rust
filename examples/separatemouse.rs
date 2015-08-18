@@ -1,11 +1,11 @@
 #[macro_use]
 extern crate glium;
-extern crate rawlib;
+extern crate rawinput;
 extern crate time;
 
 mod shader;
-use rawlib::*;
-use rawlib::RawEvent::*;
+use rawinput::*;
+use rawinput::RawEvent::*;
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::glutin::Event::{Closed,KeyboardInput};
 use glium::glutin::VirtualKeyCode;

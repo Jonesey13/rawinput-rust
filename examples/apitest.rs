@@ -1,8 +1,8 @@
-extern crate rawlib;
+extern crate rawinput;
 extern crate time;
 
-use rawlib::*;
-use rawlib::RawEvent::*;
+use rawinput::*;
+use rawinput::RawEvent::*;
 
 fn main(){
     //print_raw_device_list(devices.clone());
