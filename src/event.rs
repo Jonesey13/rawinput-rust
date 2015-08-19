@@ -1,15 +1,11 @@
+/// State of a Key or Button
 #[derive(Clone)]
 pub enum State {
     Pressed,
     Released,
 }
 
-#[derive(Clone)]
-pub enum KeyPos {
-    Left,
-    Right,
-}
-
+/// Key Identifier
 #[derive(Clone)]
 pub enum KeyId {
     Escape,
@@ -56,22 +52,31 @@ pub enum KeyId {
     Seven,
     Eight,
     Nine,
-    Shift,
-    Ctrl,
-    Alt,
+    LeftShift,
+    RightShift,
+    LeftCtrl,
+    RightCtrl,
+    LeftAlt,
+    RightAlt,
 }
 
+/// Mouse Buttons
 #[derive(Clone)]
 pub enum MouseButton {
     Left,
     Right,
     Middle,
+    Button4,
+    Button5,
 }
 
+/// Event types
+///
+/// The usize entry acts as a device ID unique to each DeviceType (Mouse, Keyboard, Hid)
 #[derive(Clone)]
 pub enum RawEvent {
     MouseButtonEvent(usize,MouseButton,State),
     MouseMoveEvent(usize,i32,i32),
-    MouseWheelEvent(usize,u16),
-    KeyboardEvent(usize,KeyId,State,KeyPos),
+    MouseWheelEvent(usize,f32),
+    KeyboardEvent(usize,KeyId,State),
 }

@@ -1,3 +1,31 @@
+/*
+rawinput library for rust development on windows
+
+# Usage Example
+
+```no_run
+extern crate rawinput;
+use rawinput::*;
+use rawinput::RawEvent::*;
+fn main() {
+    let mut manager = RawInputManager::new().unwrap();
+    manager.register_devices(DeviceType::All);
+    'outer: loop{
+        if let Some(event) = manager.get_event(){
+            match event{
+                KeyboardEvent(id,  KeyId::Return, State::Pressed) => println!("Keyboard Number {:?} Pressed Return", id),
+                KeyboardEvent(id,  KeyId::Escape, State::Pressed) => break 'outer,
+                _ => (),
+            }
+        }
+    }
+}
+```
+
+*/
+
+
+
 extern crate libc;
 extern crate winapi;
 extern crate kernel32;
@@ -29,7 +57,7 @@ use std::sync::mpsc::{
     channel
 };
 
-pub const HWND_MESSAGE: HWND = -3isize as HWND;
+const HWND_MESSAGE: HWND = -3isize as HWND;
 
 
 #[test]
@@ -73,21 +101,25 @@ unsafe fn derive_rawinput_type(input: *mut RAWINPUT) -> RAWINPUTTYPE {
     }
 }
 
+/// Mouse Raw Input Name
 #[derive(Clone)]
 pub struct Mouse {
     name: String,
 }
 
+/// Keyboard Raw Input Name
 #[derive(Clone)]
 pub struct Keyboard {
     name: String,
 }
 
+/// Hid Raw Input Name
 #[derive(Clone)]
 pub struct Hid {
     name: String,
 }
 
+/// Stores Names to All Raw Input Devices
 #[derive(Clone)]
 pub struct Devices{
     pub mice: Vec<Mouse>,
@@ -112,6 +144,7 @@ enum Command {
     Finish
 }
 
+/// Types of Raw Input Device
 #[derive(PartialEq, Eq)]
 pub enum DeviceType {
     Mice,
@@ -120,6 +153,7 @@ pub enum DeviceType {
     All,
 }
 
+/// Manages Raw Input Processing
 pub struct RawInputManager {
     joiner: Option<JoinHandle<()>>,
     sender: Sender<Command>,
@@ -154,11 +188,13 @@ impl RawInputManager {
         })
     }
 
+    /// Allows Raw Input devices of type device_type to be received from the Input Manager
     pub fn register_devices(&mut self, device_type: DeviceType) {
         self.sender.send(Command::Register(device_type)).unwrap();
         self.receiver.recv().unwrap();
     }
 
+    /// Get Event from the Input Manager
     pub fn get_event(&mut self) -> Option<RawEvent> {
         self.sender.send(Command::GetEvent).unwrap();
         self.receiver.recv().unwrap()
@@ -318,6 +354,7 @@ fn setup_message_window() -> HWND{
     hwnd
 }
 
+/// Produces a Device struct containing ID's to all available raw input Devices
 pub fn produce_raw_device_list() -> Devices {
     let mut device_list = Devices::new();
     unsafe{
@@ -395,6 +432,7 @@ pub fn produce_raw_device_list() -> Devices {
     device_list
 }
 
+/// Prints a list of all available raw input devices
 pub fn print_raw_device_list () {
     let device_list = produce_raw_device_list();
     println!("Mice:");

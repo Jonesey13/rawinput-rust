@@ -2,6 +2,7 @@ use winapi::*;
 use user32::*;
 use kernel32::*;
 use event::*;
+use std::mem::*;
 
 #[repr(C)] #[derive(Clone, Copy, Debug)]
 pub struct RAWMOUSEMOD {
@@ -38,9 +39,22 @@ pub fn process_mouse_data(raw_data: &RAWMOUSEMOD, id: usize) -> Vec<RawEvent> {
     if buttons & RI_MOUSE_MIDDLE_BUTTON_UP != 0{
         output.push(RawEvent::MouseButtonEvent(id, MouseButton::Middle, State::Released ));
     }
+    if buttons & 0x0040 != 0{
+        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Button4, State::Pressed ));
+    }
+    if buttons & 0x0080 != 0{
+        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Button4, State::Released ));
+    }
+    if buttons & 0x0100 != 0{
+        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Button5, State::Pressed ));
+    }
+    if buttons & 0x0200 != 0{
+        output.push(RawEvent::MouseButtonEvent(id, MouseButton::Button5, State::Released ));
+    }
     if buttons & RI_MOUSE_WHEEL != 0{
         let wheel_data = raw_data.usButtonData;
-        output.push(RawEvent::MouseWheelEvent(id, wheel_data));
+        let wheel_value = unsafe{(transmute_copy::<u16,i16>(&wheel_data) as f32)/120f32};
+        output.push(RawEvent::MouseWheelEvent(id, wheel_value));
     }
     if (cursor.0 != 0) || (cursor.1 != 0) {
         output.push(RawEvent::MouseMoveEvent(id, cursor.0, cursor.1));

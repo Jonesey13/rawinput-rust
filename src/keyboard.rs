@@ -3,6 +3,12 @@ use user32::*;
 use kernel32::*;
 use event::*;
 
+#[derive(Clone)]
+enum KeyPos {
+    Left,
+    Right,
+}
+
 
 pub fn process_keyboard_data(raw_data: &RAWKEYBOARD, id: usize) -> Vec<RawEvent> {
     let mut output: Vec<RawEvent> = Vec::new();
@@ -46,6 +52,24 @@ pub fn process_keyboard_data(raw_data: &RAWKEYBOARD, id: usize) -> Vec<RawEvent>
     }
     if key == VK_SPACE {
         key_opt = Some(KeyId::Space);
+    }
+    if key == VK_LSHIFT {
+        key_opt = Some(KeyId::LeftShift);
+    }
+    if key == VK_RSHIFT {
+        key_opt = Some(KeyId::RightShift);
+    }
+    if key == VK_LCONTROL {
+        key_opt = Some(KeyId::LeftCtrl);
+    }
+    if key == VK_RCONTROL {
+        key_opt = Some(KeyId::RightCtrl);
+    }
+    if key == VK_LMENU {
+        key_opt = Some(KeyId::LeftAlt);
+    }
+    if key == VK_RMENU {
+        key_opt = Some(KeyId::RightAlt);
     }
     if key == 0x30 {
         key_opt = Some(KeyId::Zero);
@@ -157,7 +181,7 @@ pub fn process_keyboard_data(raw_data: &RAWKEYBOARD, id: usize) -> Vec<RawEvent>
     }
 
     if let Some(key_id) = key_opt {
-        output.push(RawEvent::KeyboardEvent(id, key_id, key_state, key_pos));
+        output.push(RawEvent::KeyboardEvent(id, key_id, key_state));
         }
     output
 }
