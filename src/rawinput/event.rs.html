@@ -117,19 +117,20 @@
 <span id="75">75</span>
 <span id="76">76</span>
 <span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
 </pre><pre class='rust '>
+<span class='doccomment'>/// State of a Key or Button</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>State</span> {
     <span class='ident'>Pressed</span>,
     <span class='ident'>Released</span>,
 }
 
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>KeyPos</span> {
-    <span class='ident'>Left</span>,
-    <span class='ident'>Right</span>,
-}
-
+<span class='doccomment'>/// Key Identifier</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>KeyId</span> {
     <span class='ident'>Escape</span>,
@@ -176,24 +177,33 @@
     <span class='ident'>Seven</span>,
     <span class='ident'>Eight</span>,
     <span class='ident'>Nine</span>,
-    <span class='ident'>Shift</span>,
-    <span class='ident'>Ctrl</span>,
-    <span class='ident'>Alt</span>,
+    <span class='ident'>LeftShift</span>,
+    <span class='ident'>RightShift</span>,
+    <span class='ident'>LeftCtrl</span>,
+    <span class='ident'>RightCtrl</span>,
+    <span class='ident'>LeftAlt</span>,
+    <span class='ident'>RightAlt</span>,
 }
 
+<span class='doccomment'>/// Mouse Buttons</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>MouseButton</span> {
     <span class='ident'>Left</span>,
     <span class='ident'>Right</span>,
     <span class='ident'>Middle</span>,
+    <span class='ident'>Button4</span>,
+    <span class='ident'>Button5</span>,
 }
 
+<span class='doccomment'>/// Event types</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// The usize entry acts as a device ID unique to each DeviceType (Mouse, Keyboard, Hid)</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>RawEvent</span> {
     <span class='ident'>MouseButtonEvent</span>(<span class='ident'>usize</span>,<span class='ident'>MouseButton</span>,<span class='ident'>State</span>),
     <span class='ident'>MouseMoveEvent</span>(<span class='ident'>usize</span>,<span class='ident'>i32</span>,<span class='ident'>i32</span>),
-    <span class='ident'>MouseWheelEvent</span>(<span class='ident'>usize</span>,<span class='ident'>u16</span>),
-    <span class='ident'>KeyboardEvent</span>(<span class='ident'>usize</span>,<span class='ident'>KeyId</span>,<span class='ident'>State</span>,<span class='ident'>KeyPos</span>),
+    <span class='ident'>MouseWheelEvent</span>(<span class='ident'>usize</span>,<span class='ident'>f32</span>),
+    <span class='ident'>KeyboardEvent</span>(<span class='ident'>usize</span>,<span class='ident'>KeyId</span>,<span class='ident'>State</span>),
 }
 </pre>
 </section>

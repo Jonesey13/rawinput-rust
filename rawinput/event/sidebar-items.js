@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["KeyId",""],["KeyPos",""],["MouseButton",""],["RawEvent",""],["State",""]]});
+initSidebarItems({"enum":[["KeyId","Key Identifier"],["MouseButton","Mouse Buttons"],["RawEvent","Event types"],["State","State of a Key or Button"]]});

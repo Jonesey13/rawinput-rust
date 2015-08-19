@@ -452,7 +452,73 @@
 <span id="410">410</span>
 <span id="411">411</span>
 <span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
 </pre><pre class='rust '>
+<span class='comment'>/*
+rawinput library for rust development on windows
+
+# Usage Example
+
+```no_run
+extern crate rawinput;
+use rawinput::*;
+use rawinput::RawEvent::*;
+fn main() {
+    let mut manager = RawInputManager::new().unwrap();
+    manager.register_devices(DeviceType::All);
+    &#39;outer: loop{
+        if let Some(event) = manager.get_event(){
+            match event{
+                KeyboardEvent(id,  KeyId::Return, State::Pressed) =&gt; println!(&quot;Keyboard Number {:?} Pressed Return&quot;, id),
+                KeyboardEvent(id,  KeyId::Escape, State::Pressed) =&gt; break &#39;outer,
+                _ =&gt; (),
+            }
+        }
+    }
+}
+```
+
+*/</span>
+
+
+
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>winapi</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>kernel32</span>;
@@ -484,7 +550,7 @@
     <span class='ident'>channel</span>
 };
 
-<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>HWND_MESSAGE</span>: <span class='ident'>HWND</span> <span class='op'>=</span> <span class='op'>-</span><span class='number'>3isize</span> <span class='kw'>as</span> <span class='ident'>HWND</span>;
+<span class='kw'>const</span> <span class='ident'>HWND_MESSAGE</span>: <span class='ident'>HWND</span> <span class='op'>=</span> <span class='op'>-</span><span class='number'>3isize</span> <span class='kw'>as</span> <span class='ident'>HWND</span>;
 
 
 <span class='attribute'>#[<span class='ident'>test</span>]</span>
@@ -528,21 +594,25 @@
     }
 }
 
+<span class='doccomment'>/// Mouse Raw Input Name</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Mouse</span> {
     <span class='ident'>name</span>: <span class='ident'>String</span>,
 }
 
+<span class='doccomment'>/// Keyboard Raw Input Name</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Keyboard</span> {
     <span class='ident'>name</span>: <span class='ident'>String</span>,
 }
 
+<span class='doccomment'>/// Hid Raw Input Name</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Hid</span> {
     <span class='ident'>name</span>: <span class='ident'>String</span>,
 }
 
+<span class='doccomment'>/// Stores Names to All Raw Input Devices</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Devices</span>{
     <span class='kw'>pub</span> <span class='ident'>mice</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Mouse</span><span class='op'>&gt;</span>,
@@ -567,6 +637,7 @@
     <span class='ident'>Finish</span>
 }
 
+<span class='doccomment'>/// Types of Raw Input Device</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>DeviceType</span> {
     <span class='ident'>Mice</span>,
@@ -575,6 +646,7 @@
     <span class='ident'>All</span>,
 }
 
+<span class='doccomment'>/// Manages Raw Input Processing</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>RawInputManager</span> {
     <span class='ident'>joiner</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>JoinHandle</span><span class='op'>&lt;</span>()<span class='op'>&gt;&gt;</span>,
     <span class='ident'>sender</span>: <span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>Command</span><span class='op'>&gt;</span>,
@@ -609,11 +681,13 @@
         })
     }
 
+    <span class='doccomment'>/// Allows Raw Input devices of type device_type to be received from the Input Manager</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>register_devices</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>device_type</span>: <span class='ident'>DeviceType</span>) {
         <span class='self'>self</span>.<span class='ident'>sender</span>.<span class='ident'>send</span>(<span class='ident'>Command</span>::<span class='ident'>Register</span>(<span class='ident'>device_type</span>)).<span class='ident'>unwrap</span>();
         <span class='self'>self</span>.<span class='ident'>receiver</span>.<span class='ident'>recv</span>().<span class='ident'>unwrap</span>();
     }
 
+    <span class='doccomment'>/// Get Event from the Input Manager</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>get_event</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RawEvent</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>sender</span>.<span class='ident'>send</span>(<span class='ident'>Command</span>::<span class='ident'>GetEvent</span>).<span class='ident'>unwrap</span>();
         <span class='self'>self</span>.<span class='ident'>receiver</span>.<span class='ident'>recv</span>().<span class='ident'>unwrap</span>()
@@ -773,6 +847,7 @@
     <span class='ident'>hwnd</span>
 }
 
+<span class='doccomment'>/// Produces a Device struct containing ID&#39;s to all available raw input Devices</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>produce_raw_device_list</span>() <span class='op'>-&gt;</span> <span class='ident'>Devices</span> {
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>device_list</span> <span class='op'>=</span> <span class='ident'>Devices</span>::<span class='ident'>new</span>();
     <span class='kw'>unsafe</span>{
@@ -850,6 +925,7 @@
     <span class='ident'>device_list</span>
 }
 
+<span class='doccomment'>/// Prints a list of all available raw input devices</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>print_raw_device_list</span> () {
     <span class='kw'>let</span> <span class='ident'>device_list</span> <span class='op'>=</span> <span class='ident'>produce_raw_device_list</span>();
     <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Mice:&quot;</span>);
