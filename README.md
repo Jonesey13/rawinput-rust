@@ -10,7 +10,7 @@ cargo run --example apitest
 cargo run --example separatemouse
 
 ## Current Status:
-EARLY Proof of Concept Stage. Basic mouse support only.
+Early development stage. Basic mouse and keyboard support.
 
 ### Short Term Goals: 
 * Full Mouse and Keyboard Support
@@ -25,4 +25,4 @@ EARLY Proof of Concept Stage. Basic mouse support only.
 
 Dylan Ede for kicking off this idea and tons of help besides
 
-The winapi-rs contributors for making ffi in rust more bearable
+The winapi-rs contributors for making ffi in rust much easier
