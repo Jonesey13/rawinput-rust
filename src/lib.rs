@@ -1,4 +1,4 @@
-/*
+/*!
 rawinput library for rust development on windows
 
 # Usage Example
