@@ -1,4 +1,4 @@
-NOTICE - This library is now depreciated and has been superceded by the multiinput library.
+NOTICE - This library is now depreciated and has been superceded by the multiinput library [Here](https://github.com/Jonesey13/multiinput-rust).
 
 # rawinput-rust
 Rawinput API for Rust on Windows. Allows for the detection of individual mice and keyboards. Runs in a separate thread to avoid conflict with other input systems. 
