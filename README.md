@@ -1,5 +1,7 @@
+NOTICE - This library is now depreciated and has been superceded by the multiinput library.
+
 # rawinput-rust
-Rawinput API for Rust on Windows. Allows for the detection of individual mice and keyboards. Runs in a separate thread to avoid conflict with other input systems.
+Rawinput API for Rust on Windows. Allows for the detection of individual mice and keyboards. Runs in a separate thread to avoid conflict with other input systems. 
 
 [Documentation](http://jonesey13.github.io/rawinput-rust/rawinput/index.html)
 
@@ -13,12 +15,12 @@ cargo run --example separatemouse
 Early development stage. Basic mouse and keyboard support.
 
 ### Short Term Goals: 
-* Full Mouse and Keyboard Support
+* Full Mouse and Keyboard Support - MOSTLY MET (see multiinput)
 
 ### Medium Term Goals:
-* Add HID Support
+* Add HID Support - MET (See the multiinput library)
 
-### (Very) Long Term Goals:
+### Long Term Goals:
 * Cross Platform Support
 
 ## Thanks
